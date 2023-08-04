@@ -31,7 +31,6 @@ def descargar_todas_resoluciones(url):
         video = YouTube(url)
         print("Título:", video.title)
         print("Duración:", video.length, "segundos")
-        print("Resoluciones disponibles:")
 
         for stream in video.streams.filter(file_extension="mp4"):
             if stream.resolution:
@@ -43,10 +42,6 @@ def descargar_todas_resoluciones(url):
                 os.makedirs(video_folder, exist_ok=True)
 
                 file_name = f"{video.title}_{calidad}.mp4".replace(" ", "_")
-                # Agregar el nombre de la carpeta al file_path
-                file_path = os.path.join(video_folder, file_name)
-
-                print(f"Descargando video en {calidad}...")
                 # Guardar el archivo en la carpeta correspondiente
                 stream.download(output_path=video_folder, filename=file_name)
                 print("Descarga completada.")
