@@ -6,7 +6,7 @@ from pytube import YouTube
 from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 app.static_folder = 'data'  # Cambiar el nombre de la carpeta a "data"
 
 port = 5000
