@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)
 app.static_folder = 'data'  # Cambiar el nombre de la carpeta a "data"
 
-port = int(os.environ.get('PORT', 5000))
+port = 5000
 
 scheduler = BackgroundScheduler()
 scheduler.start()
@@ -52,12 +52,13 @@ def descargar_todas_resoluciones(url):
                 # Guardar el archivo en la carpeta correspondiente
                 stream.download(output_path=video_folder, filename=file_name)
                 print("Descarga completada.")
+                server_url = request.url_root
 
                 # Agregar información del video descargado a la lista
                 videos_descargados.append({
                     'title': video.title,
                     'resolution': calidad,
-                    'downloadUrl': f"http://127.0.0.1:5000/download/{video.title}/{file_name}"
+                    'downloadUrl': f"{server_url}download/{video.title}/{file_name}"
                 })
 
     except Exception as e:
