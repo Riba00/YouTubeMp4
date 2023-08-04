@@ -7,8 +7,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
-app.static_folder = 'data'  # Cambiar el nombre de la carpeta a "data"
-
+app.static_folder = 'data'
 port = 5000
 
 scheduler = BackgroundScheduler()
@@ -16,90 +15,77 @@ scheduler.start()
 
 
 
-# Ruta para recibir las solicitudes de descarga
+# Path to receive download requests
 @app.route('/download', methods=['POST'])
-def descargar_video():
+def download_video():
     url = request.json['url']
-    # Llamar a la función para descargar el video
-    videos_descargados = descargar_todas_resoluciones(url)
+    # Call the function to download the video
+    downloaded_videos = download_all_resolutions(url)
 
-    return jsonify(videos_descargados)
+    return jsonify(downloaded_videos)
 
-# Tu función para descargar videos de YouTube
-def descargar_todas_resoluciones(url):
-    videos_descargados = []
+# Get YouTube videos
+def download_all_resolutions(url):
+    videos = []
     try:
         video = YouTube(url)
-        print("Título:", video.title)
-        print("Duración:", video.length, "segundos")
-        print("Resoluciones disponibles:")
-        resoluciones_descargadas = set()
 
         for stream in video.streams.filter(file_extension="mp4"):
             if stream.resolution:
                 calidad = stream.resolution
-                print(calidad)
 
-                # Crear una carpeta con el nombre del video
+                # Create a folder with the name of the video
                 video_folder = f"data/{video.title}"
                 os.makedirs(video_folder, exist_ok=True)
 
                 file_name = f"{video.title}_{calidad}.mp4".replace(" ", "_")
-                # Agregar el nombre de la carpeta al file_path
-                file_path = os.path.join(video_folder, file_name)
 
-                print(f"Descargando video en {calidad}...")
-                # Guardar el archivo en la carpeta correspondiente
+                # Save the file in the corresponding folder
                 stream.download(output_path=video_folder, filename=file_name)
-                print("Descarga completada.")
-                server_url = request.url_root
 
-                # Agregar información del video descargado a la lista
-                videos_descargados.append({
+                videos.append({
                     'title': video.title,
                     'resolution': calidad,
                     'downloadUrl': f"https://{request.host}/download/{video.title}/{file_name}"                })
-
     except Exception as e:
         print("Error:", e)
 
-    return videos_descargados
+    return videos
 
 
-def limpiar_archivos_antiguos():
-    max_antiguedad_dias = 10  # Establecer la máxima antigüedad en días para los archivos
+def clean_old_files():
+    max_days = 10  # Set maximum age in days for files
 
-    # Obtener la fecha actual
-    fecha_actual = datetime.datetime.now()
+    # Get current date
+    actual_date = datetime.datetime.now()
 
-    # Recorrer los archivos en la carpeta "data"
+    # Loop through the files in the "data" folder
     carpeta_data = "data"
     for root, _, files in os.walk(carpeta_data):
         for archivo in files:
             archivo_path = os.path.join(root, archivo)
 
-            # Obtener la fecha de modificación del archivo
-            fecha_modificacion = datetime.datetime.fromtimestamp(os.path.getmtime(archivo_path))
+            # Get file modification date
+            modify_date = datetime.datetime.fromtimestamp(os.path.getmtime(archivo_path))
 
-            # Calcular la diferencia de tiempo entre la fecha actual y la fecha de modificación
-            diferencia_tiempo = fecha_actual - fecha_modificacion
+            # Calculate the time difference between the current date and the modified date
+            time_difference = actual_date - modify_date
 
-            # Verificar si el archivo es más antiguo que el límite establecido
-            if diferencia_tiempo.days > max_antiguedad_dias:
-                # Eliminar el archivo
+            # Check if the file is older than the set limit
+            if time_difference.days > max_days:
+                # Delete the file
                 os.remove(archivo_path)
-                print(f"Archivo {archivo_path} eliminado por ser antiguo.")
 
 
 
 
-# Nueva ruta para servir los archivos descargados
+# Path to serve downloaded files
 @app.route('/download/<path:video_title>/<path:filename>', methods=['GET'])
-def descargar_archivo(video_title, filename):
-    return send_file(f"data/{video_title}/{filename}", as_attachment=True)  # Cambiar la ruta a "data"
+def download_file(video_title, filename):
+    return send_file(f"data/{video_title}/{filename}", as_attachment=True)
 
 
 if __name__ == "__main__":
-    scheduler.add_job(limpiar_archivos_antiguos, trigger='interval', weeks=1)
+    scheduler.add_job(clean_old_files, trigger='interval', weeks=1)
 
     app.run(host='0.0.0.0', port=port)
