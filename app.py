@@ -15,6 +15,7 @@ scheduler = BackgroundScheduler()
 scheduler.start()
 
 
+
 # Ruta para recibir las solicitudes de descarga
 @app.route('/download', methods=['POST'])
 def descargar_video():
@@ -31,6 +32,8 @@ def descargar_todas_resoluciones(url):
         video = YouTube(url)
         print("Título:", video.title)
         print("Duración:", video.length, "segundos")
+        print("Resoluciones disponibles:")
+        resoluciones_descargadas = set()
 
         for stream in video.streams.filter(file_extension="mp4"):
             if stream.resolution:
@@ -42,6 +45,10 @@ def descargar_todas_resoluciones(url):
                 os.makedirs(video_folder, exist_ok=True)
 
                 file_name = f"{video.title}_{calidad}.mp4".replace(" ", "_")
+                # Agregar el nombre de la carpeta al file_path
+                file_path = os.path.join(video_folder, file_name)
+
+                print(f"Descargando video en {calidad}...")
                 # Guardar el archivo en la carpeta correspondiente
                 stream.download(output_path=video_folder, filename=file_name)
                 print("Descarga completada.")
@@ -83,10 +90,14 @@ def limpiar_archivos_antiguos():
                 os.remove(archivo_path)
                 print(f"Archivo {archivo_path} eliminado por ser antiguo.")
 
+
+
+
 # Nueva ruta para servir los archivos descargados
 @app.route('/download/<path:video_title>/<path:filename>', methods=['GET'])
 def descargar_archivo(video_title, filename):
     return send_file(f"data/{video_title}/{filename}", as_attachment=True)  # Cambiar la ruta a "data"
+
 
 if __name__ == "__main__":
     scheduler.add_job(limpiar_archivos_antiguos, trigger='interval', weeks=1)
