@@ -58,8 +58,7 @@ def descargar_todas_resoluciones(url):
                 videos_descargados.append({
                     'title': video.title,
                     'resolution': calidad,
-                    'downloadUrl': f"{server_url}download/{video.title}/{file_name}"
-                })
+                    'downloadUrl': f"https://{request.host}/download/{video.title}/{file_name}"                })
 
     except Exception as e:
         print("Error:", e)
